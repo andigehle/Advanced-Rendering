@@ -1,0 +1,17 @@
+Convex
+======
+Ein Objekt ist konvex wenn für alle Punkte x,y in Obj. 
+die Line xy ebenfalls innerhalb des Objektes liegt.
+
+Pipeline Archi.
+===============
+4-Steps architecture
+
+(app. programm) => [Vertices]
+
+=> Vertex Processor 
+=> Clipper & Primitive Assembler 
+=> Rasterizer 
+=> Fragment Processor
+
+=> [Pixels] => (Display)
