@@ -1,12 +1,11 @@
-package sheet_1;
+package exercises;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GLAutoDrawable;
 
-import com.sun.opengl.util.GLUT;
-
 import hilfsklassen.AdvancedTemplate;
 
+@SuppressWarnings("serial")
 public class DrawSquare extends AdvancedTemplate {
 
 	/**
@@ -30,15 +29,14 @@ public class DrawSquare extends AdvancedTemplate {
 
 	public void displayDraw(GLAutoDrawable drawable) {
 		GL gl = drawable.getGL();
-		GLUT glut = getGlut();
-		int zoom = -30;
+		int zoom = 0;
 
 		// Draw coord-system
 		gl.glPushMatrix();
 		{
 			// gl.glColor3f(1.0f, 1.0f, 1.0f);
 			gl.glTranslatef(0, 0, zoom);
-			gl.glBegin(gl.GL_LINES);
+			gl.glBegin(GL.GL_LINES);
 			{
 				// x-Axis
 				gl.glVertex2d(-10, 0);
@@ -97,9 +95,17 @@ public class DrawSquare extends AdvancedTemplate {
 		gl.glPushMatrix();
 		{
 			gl.glColor3f(color[0], color[1], color[2]);
-			gl.glBegin(gl.GL_POLYGON);
+			gl.glBegin(GL.GL_POLYGON);
 			{
-				//gl.glNormal3f(0, 0, 1);
+				//Set normals
+				if(vertex1[0] == vertex2[0] && vertex1[0] == vertex3[0] && vertex1[0] == vertex4[0]){
+					gl.glNormal3f(1, 0, 0);
+				}else if(vertex1[1] == vertex2[1] && vertex1[1] == vertex3[1] && vertex1[1] == vertex4[1]){
+					gl.glNormal3f(0, 1, 0);
+				}else if(vertex1[2] == vertex2[2] && vertex1[2] == vertex3[2] && vertex1[2] == vertex4[2]){
+					gl.glNormal3f(0, 0, 1);
+				}
+				
 				gl.glVertex3f(vertex1[0], vertex1[1], vertex1[2]);
 				gl.glVertex3f(vertex2[0], vertex2[1], vertex2[2]);
 				gl.glVertex3f(vertex3[0], vertex3[1], vertex3[2]);

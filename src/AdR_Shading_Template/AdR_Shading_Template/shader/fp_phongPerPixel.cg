@@ -1,0 +1,50 @@
+// data interpolated from vertex program output
+struct vertexIN
+{
+  float3 objectSpacePos : TEXCOORD1;
+  float3 normal   : TEXCOORD2;
+};
+
+float4 main(vertexIN vIn, 
+              uniform float3 Ia,
+              uniform float3 Id,
+              uniform float3 Is,
+              uniform float4 lightPosition,
+              uniform float4 eyePosition,
+              uniform float3 Ka,
+              uniform float3 Kd,
+              uniform float3 Ks,
+              uniform float  shininess,
+              uniform float4x4 modelViewInv) : COLOR
+{
+  //light calculation is done in object space (normals) 
+  float3 P = vIn.objectSpacePos.xyz;
+  float3 N = normalize(vIn.normal);
+
+  //so we need to transform eye position 
+  float4 temp = mul(modelViewInv, eyePosition);
+  float3 ePos = float3(temp.x, temp.y, temp.z);
+  
+  //set lightPosition
+  float3 lPos = float3(lightPosition.x, lightPosition.y, lightPosition.z);
+
+  // compute ambient term
+  float3 ambient = Ka * Ia;
+
+  // compute the diffuse term
+  float3 L = normalize(lPos.xyz - P);
+  float diffuseLight = max(dot(L, N), 0);
+  float3 diffuse = Kd * Id * diffuseLight;
+
+  // compute the specular term
+  float3 V = normalize(ePos - P);
+  float3 H = normalize(L + V);
+  float specularLight = pow(max(dot(H, N), 0), shininess);
+  if (diffuseLight <= 0) specularLight = 0;
+  float3 specular = Ks * Is * specularLight;
+
+  float4 color;
+  color.rgb = ambient + diffuse + specular;  
+  color.a = 1;
+  return color;  
+}
