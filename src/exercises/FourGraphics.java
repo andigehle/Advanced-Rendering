@@ -25,9 +25,10 @@ public class FourGraphics extends AdvancedTemplate {
 	public FourGraphics() {
 		super();
 		setTitle("Four graphics");
-		
-		setModiFlag(10);
-		setLightFlag(0001);
+
+		setModiFlag(MODI_DEPTH_BUFFERING);
+		setLightFlag(LIGHT_DIRECTIONAL);
+		setLightFlag(LIGHT_SHADING);
 	}
 
 	// ------------------------------------------------------------
@@ -39,7 +40,9 @@ public class FourGraphics extends AdvancedTemplate {
 		int w = 7, h = 7, zoom = 0, size = 5;
 		int slices = 20, stacks = 20;
 
-		//drawCoord(gl, 10);
+		boolean use_materials = false;
+
+		// drawCoord(gl, 10);
 
 		// Materials
 		float[] BRASS_MATERIAL = { 0.33f, 0.22f, 0.03f, 1.0f, 0.78f, 0.57f,
@@ -51,14 +54,21 @@ public class FourGraphics extends AdvancedTemplate {
 		float[] TEST = { 0.3f, 0.5f, 1f, 0.5f, 0.3f, 0.5f, 1f, 0.5f, 0.3f,
 				0.5f, 1f, 0.5f, 5 };
 
+		if (!use_materials) {
+			gl.glEnable(GL.GL_COLOR_MATERIAL);
+		}
+
 		// Draw cube
 		gl.glPushMatrix();
 		{
-			gl.glMaterialfv(GL.GL_FRONT, GL.GL_AMBIENT, BRASS_MATERIAL, 0);
-			gl.glMaterialfv(GL.GL_FRONT, GL.GL_DIFFUSE, BRASS_MATERIAL, 4);
-			gl.glMaterialfv(GL.GL_FRONT, GL.GL_SPECULAR, BRASS_MATERIAL, 8);
-			gl.glMaterialf(GL.GL_FRONT, GL.GL_SHININESS, BRASS_MATERIAL[12]);
-			// gl.glColor3f(1.0f, 0f, 0f);
+			if (use_materials) {
+				gl.glMaterialfv(GL.GL_FRONT, GL.GL_AMBIENT, BRASS_MATERIAL, 0);
+				gl.glMaterialfv(GL.GL_FRONT, GL.GL_DIFFUSE, BRASS_MATERIAL, 4);
+				gl.glMaterialfv(GL.GL_FRONT, GL.GL_SPECULAR, BRASS_MATERIAL, 8);
+				gl.glMaterialf(GL.GL_FRONT, GL.GL_SHININESS, BRASS_MATERIAL[12]);
+			} else {
+				gl.glColor3f(1.0f, 0f, 0f);
+			}
 			gl.glTranslatef(-w, h, zoom);
 			glut.glutSolidCube(size);
 		}
@@ -67,12 +77,18 @@ public class FourGraphics extends AdvancedTemplate {
 		// Draw sphere
 		gl.glPushMatrix();
 		{
-			gl.glMaterialfv(GL.GL_FRONT, GL.GL_AMBIENT, REDPLASTIC_MATERIAL, 0);
-			gl.glMaterialfv(GL.GL_FRONT, GL.GL_DIFFUSE, REDPLASTIC_MATERIAL, 4);
-			gl.glMaterialfv(GL.GL_FRONT, GL.GL_SPECULAR, REDPLASTIC_MATERIAL, 8);
-			gl.glMaterialf(GL.GL_FRONT, GL.GL_SHININESS,
-					REDPLASTIC_MATERIAL[12]);
-			// gl.glColor3f(0f, 1.0f, 0f);
+			if (use_materials) {
+				gl.glMaterialfv(GL.GL_FRONT, GL.GL_AMBIENT,
+						REDPLASTIC_MATERIAL, 0);
+				gl.glMaterialfv(GL.GL_FRONT, GL.GL_DIFFUSE,
+						REDPLASTIC_MATERIAL, 4);
+				gl.glMaterialfv(GL.GL_FRONT, GL.GL_SPECULAR,
+						REDPLASTIC_MATERIAL, 8);
+				gl.glMaterialf(GL.GL_FRONT, GL.GL_SHININESS,
+						REDPLASTIC_MATERIAL[12]);
+			} else {
+				gl.glColor3f(0f, 1.0f, 0f);
+			}
 			gl.glTranslatef(w, h, zoom);
 			glut.glutSolidSphere(size / 2, slices, stacks);
 		}
@@ -81,13 +97,18 @@ public class FourGraphics extends AdvancedTemplate {
 		// Draw torus
 		gl.glPushMatrix();
 		{
-			gl.glMaterialfv(GL.GL_FRONT, GL.GL_AMBIENT, WHITESHINEY_MATERIAL, 0);
-			gl.glMaterialfv(GL.GL_FRONT, GL.GL_DIFFUSE, WHITESHINEY_MATERIAL, 4);
-			gl.glMaterialfv(GL.GL_FRONT, GL.GL_SPECULAR, WHITESHINEY_MATERIAL,
-					8);
-			gl.glMaterialf(GL.GL_FRONT, GL.GL_SHININESS,
-					WHITESHINEY_MATERIAL[12]);
-			// gl.glColor3f(1.0f, 1.0f, 0f);
+			if (use_materials) {
+				gl.glMaterialfv(GL.GL_FRONT, GL.GL_AMBIENT,
+						WHITESHINEY_MATERIAL, 0);
+				gl.glMaterialfv(GL.GL_FRONT, GL.GL_DIFFUSE,
+						WHITESHINEY_MATERIAL, 4);
+				gl.glMaterialfv(GL.GL_FRONT, GL.GL_SPECULAR,
+						WHITESHINEY_MATERIAL, 8);
+				gl.glMaterialf(GL.GL_FRONT, GL.GL_SHININESS,
+						WHITESHINEY_MATERIAL[12]);
+			} else {
+				gl.glColor3f(1.0f, 1.0f, 0f);
+			}
 			gl.glTranslatef(w, -h, zoom);
 			glut.glutSolidTorus(size / 2 - 1.25, size / 2, slices, stacks);
 		}
@@ -96,11 +117,14 @@ public class FourGraphics extends AdvancedTemplate {
 		// Draw cylinder
 		gl.glPushMatrix();
 		{
-			gl.glMaterialfv(GL.GL_FRONT, GL.GL_AMBIENT, TEST, 0);
-			gl.glMaterialfv(GL.GL_FRONT, GL.GL_DIFFUSE, TEST, 4);
-			gl.glMaterialfv(GL.GL_FRONT, GL.GL_SPECULAR, TEST, 8);
-			gl.glMaterialf(GL.GL_FRONT, GL.GL_SHININESS, TEST[12]);
-			// gl.glColor3f(0f, 0f, 1.0f);
+			if (use_materials) {
+				gl.glMaterialfv(GL.GL_FRONT, GL.GL_AMBIENT, TEST, 0);
+				gl.glMaterialfv(GL.GL_FRONT, GL.GL_DIFFUSE, TEST, 4);
+				gl.glMaterialfv(GL.GL_FRONT, GL.GL_SPECULAR, TEST, 8);
+				gl.glMaterialf(GL.GL_FRONT, GL.GL_SHININESS, TEST[12]);
+			} else {
+				gl.glColor3f(0f, 0f, 1.0f);
+			}
 			gl.glTranslatef(-w, -h - size / 2, zoom);
 			gl.glRotatef(-90, 1, 0, 0);
 			glut.glutSolidCylinder(size / 2, size, slices, stacks);

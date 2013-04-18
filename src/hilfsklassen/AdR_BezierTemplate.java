@@ -16,6 +16,7 @@ import javax.media.opengl.GLAutoDrawable;
 
 import com.sun.opengl.util.BufferUtil;
 
+@SuppressWarnings("serial")
 public class AdR_BezierTemplate extends JoglTemplate
 {
 	// bezier curve control points (assignment 1)

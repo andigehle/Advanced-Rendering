@@ -1,6 +1,7 @@
 package hilfsklassen;
 
 import java.awt.event.KeyEvent;
+import java.util.BitSet;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GLAutoDrawable;
@@ -13,10 +14,18 @@ public class AdvancedTemplate extends JoglTemplate {
 
 	private int camera = 3;
 	private boolean set_camera = false;
-	private int light_flag = 0000;
+	private BitSet light_flag = new BitSet();
 	private boolean set_light = false;
-	private int modi_flag = 00;
+	private BitSet modi_flag = new BitSet();
 	private boolean set_modi = true;
+
+	protected final static int MODI_DEPTH_BUFFERING = 0;
+	protected final static int MODI_CULLING = 1;
+
+	protected final static int LIGHT_DIRECTIONAL = 0;
+	protected final static int LIGHT_SPOT = 1;
+	protected final static int LIGHT_POSITIONAL = 2;
+	protected final static int LIGHT_SHADING = 3;
 
 	/**
 	 * The main method
@@ -59,33 +68,57 @@ public class AdvancedTemplate extends JoglTemplate {
 		// Define lights
 		gl.glEnable(GL.GL_LIGHTING);
 
-		float[] lt0_position = { 0, 1, 1, 1 };
-		float[] lt0_ambient = { 0.3f, 0.3f, 0.3f, 1};
-		float[] lt0_diffuse = { 1, 1, 1, 1};
-		float[] lt0_specular = { 1, 1, 1, 1};
+		/*
+		 * Directional light source (w = 0 in position) The light source is at
+		 * an infinite distance, all the ray are parallel and have the direction
+		 * (x, y, z).
+		 */
+		float[] lt0_position = { 0, 1, 1, 0 };
+		float[] lt0_ambient = { 0.3f, 0.3f, 0.3f, 1 };
+		float[] lt0_diffuse = { 1.0f, 1.0f, 1.0f, 1.0f };
+		float[] lt0_specular = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 		gl.glLightfv(GL.GL_LIGHT0, GL.GL_POSITION, lt0_position, 0);
 		gl.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, lt0_ambient, 0);
 		gl.glLightfv(GL.GL_LIGHT0, GL.GL_DIFFUSE, lt0_diffuse, 0);
 		gl.glLightfv(GL.GL_LIGHT0, GL.GL_SPECULAR, lt0_specular, 0);
 
-		float[] lt1_position = { 0, 0, -1, 1 };
-		float[] lt1_ambient = { 0.4f, 0.4f, 0.2f, 1};
-		float[] lt1_diffuse = { 1, 1, 0.4f, 1};
-		float[] lt1_specular = { 1, 1, 0.6f, 1};
+		/**
+		 * Spotlight This light is a sport. A spot emits lights on a particular
+		 * direction. * To create a spot, we have to specify the spot direction
+		 * (GL_SPOT_DIRECTION) * and the spot cut-off (GL_SPOT_CUTOFF). * The
+		 * spot cut-off is the angle of the cone in which the spot emits light.
+		 * The * axis of the cone is the spo direction.
+		 */
+		float[] lt1_position = { 1,1,1, 1.0f };
+		float[] lt1_ambient = { 0.4f, 0.4f, 0.2f, 1.0f };
+		float[] lt1_diffuse = { 1, 1, 0.4f, 1 };
+		float[] lt1_specular = { 1, 1, 0.6f, 1 };
+		float[] spot_direction = { 0, 0, 0f, 1.0f };
+		int spot_cutoff = 180;
 
-		gl.glLightfv(GL.GL_LIGHT1, GL.GL_POSITION, lt0_position, 0);
-		gl.glLightfv(GL.GL_LIGHT1, GL.GL_AMBIENT, lt0_ambient, 0);
+		gl.glLightfv(GL.GL_LIGHT1, GL.GL_POSITION, lt1_position, 0);
+		gl.glLightfv(GL.GL_LIGHT1, GL.GL_AMBIENT, lt1_ambient, 0);
 		gl.glLightfv(GL.GL_LIGHT1, GL.GL_DIFFUSE, lt1_diffuse, 0);
 		gl.glLightfv(GL.GL_LIGHT1, GL.GL_SPECULAR, lt1_specular, 0);
 
-		float[] lt2_position = { 0, 0, 3, 1 };
-		float[] lt2_ambient = { 0.2f, 0, 0, 1};
-		float[] lt2_diffuse = { 0, 1, 0, 1};
-		float[] lt2_specular = { 0, 0, 1, 1};
+		gl.glLightfv(GL.GL_LIGHT1, GL.GL_SPOT_DIRECTION, spot_direction, 0);
+		// angle of the cone light emitted by the spot : value between 0 to 180
+		gl.glLightf(GL.GL_LIGHT1, GL.GL_SPOT_CUTOFF, spot_cutoff);
+		gl.glLightf(GL.GL_LIGHT1, GL.GL_SPOT_EXPONENT, 15.0f);
 
-		gl.glLightfv(GL.GL_LIGHT2, GL.GL_POSITION, lt0_position, 0);
-		gl.glLightfv(GL.GL_LIGHT2, GL.GL_AMBIENT, lt0_ambient, 0);
+		/*
+		 * Positional light source (w = 1) The light source is positioned at (x,
+		 * y, z). The ray come from this particular location (x, y, z) and goes
+		 * towards all directions.
+		 */
+		float[] lt2_position = { -2.0f, 2.0f, -5.0f, 1.0f };
+		float[] lt2_ambient = { 1.0f, 1.0f, 0.0f, 1.0f };
+		float[] lt2_diffuse = { 1.0f, 1.0f, 0.0f, 1.0f };
+		float[] lt2_specular = { 0, 0, 1, 1 };
+
+		gl.glLightfv(GL.GL_LIGHT2, GL.GL_POSITION, lt2_position, 0);
+		gl.glLightfv(GL.GL_LIGHT2, GL.GL_AMBIENT, lt2_ambient, 0);
 		gl.glLightfv(GL.GL_LIGHT2, GL.GL_DIFFUSE, lt2_diffuse, 0);
 		gl.glLightfv(GL.GL_LIGHT2, GL.GL_SPECULAR, lt2_specular, 0);
 	}
@@ -110,32 +143,38 @@ public class AdvancedTemplate extends JoglTemplate {
 
 			// Buffer switcher
 		} else if (e.getKeyCode() == KeyEvent.VK_4) {
-			setModiFlag(modi_flag ^= 01);
-			System.out.println("Depth buffering switched.");
+			System.out.print("Depth buffering ");
+			setModiFlag(MODI_DEPTH_BUFFERING);
 		} else if (e.getKeyCode() == KeyEvent.VK_5) {
-			setModiFlag(modi_flag ^= 10);
-			System.out.println("Culling switched.");
+			System.out.print("Culling ");
+			setModiFlag(MODI_CULLING);
 
 			// Lights
 		} else if (e.getKeyCode() == KeyEvent.VK_6) {
-			setLightFlag(light_flag ^= 0001);
-			System.out.println("Directional light switched.");
+			System.out.print("Directional light ");
+			setLightFlag(LIGHT_DIRECTIONAL);
 		} else if (e.getKeyCode() == KeyEvent.VK_7) {
-			setLightFlag(light_flag ^= 0010);
-			System.out.println("Spot light switched.");
+			System.out.print("Spot light ");
+			setLightFlag(LIGHT_SPOT);
 		} else if (e.getKeyCode() == KeyEvent.VK_8) {
-			setLightFlag(light_flag ^= 0100);
-			System.out.println("Posistional light switched.");
+			System.out.print("Posistional light ");
+			setLightFlag(LIGHT_POSITIONAL);
 		} else if (e.getKeyCode() == KeyEvent.VK_9) {
-			setLightFlag(light_flag ^= 1000);
-			System.out.println("Flat/Smooth shading switched.");
+			System.out.print("Flat/Smooth shading ");
+			setLightFlag(LIGHT_SHADING);
 		}
 	}
 
-	protected void setLightFlag(int flag) {
-		light_flag = flag;
+	protected void setLightFlag(int flag_index) {
+		if (light_flag.get(flag_index)) {
+			light_flag.clear(flag_index);
+			System.out.print("disabled.");
+		} else {
+			light_flag.set(flag_index);
+			System.out.print("enabled.");
+		}
 		set_light = true;
-		System.out.println("LIGHT_FLAG: " + light_flag);
+		System.out.println("");
 	}
 
 	/**
@@ -143,10 +182,16 @@ public class AdvancedTemplate extends JoglTemplate {
 	 * 
 	 * @param flag
 	 */
-	protected void setModiFlag(int flag) {
-		modi_flag = flag;
+	protected void setModiFlag(int flag_index) {
+		if (modi_flag.get(flag_index)) {
+			modi_flag.clear(flag_index);
+			System.out.print("disabled.");
+		} else {
+			modi_flag.set(flag_index);
+			System.out.print("enabled.");
+		}
 		set_modi = true;
-		System.out.println("MODI_FLAG: " + modi_flag);
+		System.out.println("");
 	}
 
 	/**
@@ -210,26 +255,26 @@ public class AdvancedTemplate extends JoglTemplate {
 			// TODO: else should be gl.glEnable(GL.GL_COLOR_MATERIAL);
 
 			// Light sources
-			if ((light_flag | 1110) == 1111) {
+			if (light_flag.get(LIGHT_DIRECTIONAL)) {
 				gl.glEnable(GL.GL_LIGHT0);
 			} else {
 				gl.glDisable(GL.GL_LIGHT0);
 			}
 
-			if ((light_flag | 1101) == 1111) {
+			if (light_flag.get(LIGHT_SPOT)) {
 				gl.glEnable(GL.GL_LIGHT1);
 			} else {
 				gl.glDisable(GL.GL_LIGHT1);
 			}
 
-			if ((light_flag | 1011) == 1111) {
+			if (light_flag.get(LIGHT_POSITIONAL)) {
 				gl.glEnable(GL.GL_LIGHT2);
 			} else {
 				gl.glDisable(GL.GL_LIGHT2);
 			}
 
 			// Shading
-			if ((light_flag | 0111) == 1111) {
+			if (light_flag.get(LIGHT_SHADING)) {
 				gl.glShadeModel(GL.GL_SMOOTH);
 			} else {
 				gl.glShadeModel(GL.GL_FLAT);
@@ -240,19 +285,19 @@ public class AdvancedTemplate extends JoglTemplate {
 	}
 
 	private void changeModi(GL gl) {
-		// Z-buffer
-		if ((modi_flag | 10) == 11) {
-			gl.glEnable(GL.GL_CULL_FACE);
-		} else {
-			gl.glDisable(GL.GL_CULL_FACE);
-		}
-		// Culling
-		if ((modi_flag | 01) == 11) {
+		// Depth-Buffer
+		if (modi_flag.get(MODI_DEPTH_BUFFERING)) {
 			gl.glEnable(GL.GL_DEPTH_TEST);
 		} else {
 			gl.glDisable(GL.GL_DEPTH_TEST);
 		}
 
+		// Culling
+		if (modi_flag.get(MODI_CULLING)) {
+			gl.glEnable(GL.GL_CULL_FACE);
+		} else {
+			gl.glDisable(GL.GL_CULL_FACE);
+		}
 	}
 
 	private void changeCamera(GL gl) {
@@ -298,28 +343,14 @@ public class AdvancedTemplate extends JoglTemplate {
 
 	public void displayDraw(GLAutoDrawable drawable) {
 		GL gl = drawable.getGL();
-		// Prepare light parameters.
-		float SHINE_ALL_DIRECTIONS = 1;
-		float[] lightPos = { -30, 0, 0, SHINE_ALL_DIRECTIONS };
-		float[] lightColorAmbient = { 0.2f, 0.2f, 0.2f, 1f };
-		float[] lightColorSpecular = { 0.8f, 0.8f, 0.8f, 1f };
-
-		// Set light parameters.
-		gl.glLightfv(GL.GL_LIGHT1, GL.GL_POSITION, lightPos, 0);
-		gl.glLightfv(GL.GL_LIGHT1, GL.GL_AMBIENT, lightColorAmbient, 0);
-		gl.glLightfv(GL.GL_LIGHT1, GL.GL_SPECULAR, lightColorSpecular, 0);
-
-		// Enable lighting in GL.
-		gl.glEnable(GL.GL_LIGHT1);
-		gl.glEnable(GL.GL_LIGHTING);
 
 		// Set material properties.
-		float[] rgba = { 0.3f, 0.5f, 1f };
+		float[] rgba = { 0.3f, 0.5f, 1f, 1 };
 		gl.glMaterialfv(GL.GL_FRONT, GL.GL_AMBIENT, rgba, 0);
 		gl.glMaterialfv(GL.GL_FRONT, GL.GL_SPECULAR, rgba, 0);
 		gl.glMaterialf(GL.GL_FRONT, GL.GL_SHININESS, 0.5f);
 
-		getGlut().glutSolidTeapot(1);
+		getGlut().glutSolidTeapot(3);
 	}
 
 	// ------------------------------------------------------------

@@ -1,4 +1,4 @@
-package AdR_Shading_Template.AdR_Shading_Template;
+package hilfsklassen;
 
 /**
  * @author Andreas Elsner / Stephan Arens / Gitta Domik
@@ -20,6 +20,7 @@ import com.sun.opengl.cg.CGparameter;
 import com.sun.opengl.cg.CGprogram;
 import com.sun.opengl.cg.CgGL;
 
+@SuppressWarnings("serial")
 public class AdR_ShadingTemplate extends JoglTemplate
 {
 	// TODO: Assignment 3_3: create your own toon shader and load it here

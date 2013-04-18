@@ -1,4 +1,4 @@
-package AdR_CubeMappingTemplate;
+package hilfsklassen;
 
 /**
  * @author Andreas Elsner / Stephan Arens / Gitta Domik
@@ -18,6 +18,7 @@ import javax.media.opengl.GLAutoDrawable;
 import com.sun.opengl.util.texture.TextureData;
 import com.sun.opengl.util.texture.TextureIO;
 
+@SuppressWarnings("serial")
 public class AdR_CubeMappingTemplate extends JoglTemplate
 {
 

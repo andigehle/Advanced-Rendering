@@ -32,6 +32,7 @@ import com.sun.opengl.util.BufferUtil;
 import com.sun.opengl.util.FPSAnimator;
 import com.sun.opengl.util.GLUT;
 
+@SuppressWarnings("serial")
 public class JoglTemplate extends Frame implements GLEventListener,
 		MouseListener, MouseMotionListener, MouseWheelListener, KeyListener{
 	
