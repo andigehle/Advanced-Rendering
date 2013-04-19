@@ -1,5 +1,6 @@
 package exercises;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
@@ -15,6 +16,7 @@ public class Flow extends AdvancedTemplate {
 	private int[] flow_spatial_dim = new int[3];
 	private int[] flow_ext_dim = new int[3];
 
+	private float flow_min = -1;
 	private float flow_max = 0;
 
 	/**
@@ -35,11 +37,15 @@ public class Flow extends AdvancedTemplate {
 		setTitle("Visualization of a 2D flow slice");
 
 		setModiFlag(MODI_DEPTH_BUFFERING);
-		//setLightFlag(LIGHT_DIRECTIONAL);
-		//setLightFlag(LIGHT_SHADING);
+		// setLightFlag(LIGHT_DIRECTIONAL);
+		// setLightFlag(LIGHT_SHADING);
 
 		// Parse data
 		parseData("data/field2.irreg");
+
+		System.out.println("Min is " + flow_min);
+		System.out.println("Max is " + flow_max);
+		System.out.println("Range is " + (flow_max-flow_min));
 	}
 
 	@Override
@@ -74,11 +80,23 @@ public class Flow extends AdvancedTemplate {
 			flow_data = new float[6724][7];
 			for (int line = 0, value = 0; scan.hasNext(); value++) {
 				if (value == 6) {
-					//length
+					// Get length
 					flow_data[line][6] = getLength(flow_data[line]);
+
+					// Set max
 					flow_max = Math.max(flow_max, flow_data[line][6]);
-					
-					//reset
+
+					// Set min
+					if (flow_min < 0 || flow_min > flow_data[line][6]) {
+						flow_min = flow_data[line][6];
+					}
+
+					// Norm u,v,w
+					for (int i = 3; i < 6; i++) {
+						flow_data[line][i] /= flow_data[line][6];
+					}
+
+					// Reset/Increase counters
 					line++;
 					value = 0;
 				}
@@ -98,13 +116,13 @@ public class Flow extends AdvancedTemplate {
 
 		gl.glEnable(GL.GL_COLOR_MATERIAL);
 
-		//drawCoord(gl, 20);
-		
+		// drawCoord(gl, 20);
+
 		gl.glPushMatrix();
 		{
-			//center image on 2d base
+			// center image on 2d base
 			gl.glTranslatef(-11f, -11f, 0);
-			
+
 			// Maybe use dim for something...border etc. ?
 			gl.glScalef(20, 20, 1);
 			for (int i = 0; i < flow_data.length; i++) {
@@ -113,23 +131,26 @@ public class Flow extends AdvancedTemplate {
 			}
 		}
 		gl.glPopMatrix();
-		
+
 	}
 
-	private float getLength(float[] coords){
+	private float getLength(float[] coords) {
 		return (float) Math.sqrt(Math.pow((coords[3]), 2)
-				+ Math.pow((coords[4]), 2)
-				+ Math.pow((coords[5]), 2));
+				+ Math.pow((coords[4]), 2) + Math.pow((coords[5]), 2));
 	}
-	
+
 	private void drawFlow(GL gl, float[] coords) {
+		float stroke_length = 0.02f;
+
 		gl.glPushMatrix();
 		{
 			gl.glBegin(GL.GL_LINES);
 			{
 				gl.glVertex3f(coords[0], coords[1], coords[2]);
-				//relative movement
-				gl.glVertex3f(coords[0]+coords[3], coords[1]+coords[4], coords[2]+coords[5]);
+				// relative movement
+				gl.glVertex3f(coords[0] + stroke_length * coords[3], coords[1]
+						+ stroke_length * coords[4], coords[2] + stroke_length
+						* coords[5]);
 			}
 			gl.glEnd();
 		}
@@ -137,37 +158,15 @@ public class Flow extends AdvancedTemplate {
 	}
 
 	private float[] dataToColor(float length) {
-		float min = 0;
-		float max = flow_max;
-		float red, green, blue;
-		float value = length/max;
-		
-	    if (0 <= value && value <= 1/8) {
-	        red = 0;
-	        green = 0;
-	        blue = 4*value + .5f; // .5 - 1 // b = 1/2
-	    } else if (1/8 < value && value <= 3/8) {
-	        red = 0;
-	        green = 4*value - .5f; // 0 - 1 // b = - 1/2
-	        blue = 0;
-	    } else if (3/8 < value && value <= 5/8) {
-	        red = 4*value - 1.5f; // 0 - 1 // b = - 3/2
-	        green = 1;
-	        blue = -4*value + 2.5f; // 1 - 0 // b = 5/2
-	    } else if (5/8 < value && value <= 7/8) {
-	        red = 1;
-	        green = -4*value + 3.5f; // 1 - 0 // b = 7/2
-	        blue = 0;
-	    } else if (7/8 < value && value <= 1) {
-	        red = -4*value + 4.5f; // 1 - .5 // b = 9/2
-	        green = 0;
-	        blue = 0;
-	    } else {    // should never happen - value > 1
-	        red = .5f;
-	        green = 0;
-	        blue = 0;
-	    }
-		
-		return new float[]{red,green,blue};
+		float range = flow_max - flow_min;
+		float value = length / range;
+
+		float h = (1 - value);
+		float s = 1;
+		float b = 0.5f;
+
+		Color hsb = Color.getHSBColor(h, s, b);
+
+		return new float[] { hsb.getRed(), hsb.getGreen(), hsb.getBlue() };
 	}
 }

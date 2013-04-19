@@ -40,7 +40,7 @@ public class FourGraphics extends AdvancedTemplate {
 		int w = 7, h = 7, zoom = 0, size = 5;
 		int slices = 20, stacks = 20;
 
-		boolean use_materials = false;
+		boolean use_materials = true;
 
 		// drawCoord(gl, 10);
 

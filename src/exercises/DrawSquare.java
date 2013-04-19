@@ -105,10 +105,14 @@ public class DrawSquare extends AdvancedTemplate {
 				}else if(vertex1[2] == vertex2[2] && vertex1[2] == vertex3[2] && vertex1[2] == vertex4[2]){
 					gl.glNormal3f(0, 0, 1);
 				}
-				
+
+		        gl.glTexCoord2f(0, 0);
 				gl.glVertex3f(vertex1[0], vertex1[1], vertex1[2]);
+		        gl.glTexCoord2f(1, 0);
 				gl.glVertex3f(vertex2[0], vertex2[1], vertex2[2]);
+		        gl.glTexCoord2f(1, 1);
 				gl.glVertex3f(vertex3[0], vertex3[1], vertex3[2]);
+		        gl.glTexCoord2f(0, 1);
 				gl.glVertex3f(vertex4[0], vertex4[1], vertex4[2]);
 			}
 			gl.glEnd();
