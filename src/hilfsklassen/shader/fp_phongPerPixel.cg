@@ -5,46 +5,56 @@ struct vertexIN
   float3 normal   : TEXCOORD2;
 };
 
-float4 main(vertexIN vIn, 
-              uniform float3 Ia,
-              uniform float3 Id,
-              uniform float3 Is,
-              uniform float4 lightPosition,
-              uniform float4 eyePosition,
-              uniform float3 Ka,
-              uniform float3 Kd,
-              uniform float3 Ks,
-              uniform float  shininess,
-              uniform float4x4 modelViewInv) : COLOR
+// OpenGL state
+uniform float4x4 ModelViewInverse : state.matrix.modelview.inverse;
+uniform float4 Light0Position : state.light[0].position;
+uniform float4 Light0Ambient : state.light[0].ambient;
+uniform float4 Light0Diffuse : state.light[0].diffuse;
+uniform float4 Light0Specular : state.light[0].specular;
+uniform float4 MaterialAmbient : state.material.ambient;
+uniform float4 MaterialDiffuse : state.material.diffuse;
+uniform float4 MaterialSpecular : state.material.specular;
+uniform float MaterialShininess : state.material.shininess;
+
+
+float4 main(vertexIN vIn,
+            uniform float4 blackHolePosition, 
+            uniform float time) : COLOR
 {
   //light calculation is done in object space (normals) 
   float3 P = vIn.objectSpacePos.xyz;
   float3 N = normalize(vIn.normal);
 
   //so we need to transform eye position 
-  float4 temp = mul(modelViewInv, eyePosition);
-  float3 ePos = float3(temp.x, temp.y, temp.z);
+  float3 ePos = (mul(ModelViewInverse, float4(0, 0, 0, 1))).xyz;
   
   //set lightPosition
-  float3 lPos = float3(lightPosition.x, lightPosition.y, lightPosition.z);
+  float3 lPos = (mul(ModelViewInverse, Light0Position)).xyz;
 
   // compute ambient term
-  float3 ambient = Ka * Ia;
+  float4 ambient = MaterialAmbient * Light0Ambient;
 
   // compute the diffuse term
   float3 L = normalize(lPos.xyz - P);
   float diffuseLight = max(dot(L, N), 0);
-  float3 diffuse = Kd * Id * diffuseLight;
+  float4 diffuse = MaterialDiffuse * Light0Diffuse * diffuseLight;
 
   // compute the specular term
   float3 V = normalize(ePos - P);
   float3 H = normalize(L + V);
-  float specularLight = pow(max(dot(H, N), 0), shininess);
+  float specularLight = pow(max(dot(H, N), 0), MaterialShininess);
   if (diffuseLight <= 0) specularLight = 0;
-  float3 specular = Ks * Is * specularLight;
+  float4 specular = MaterialSpecular * Light0Specular * specularLight;
 
   float4 color;
-  color.rgb = ambient + diffuse + specular;  
-  color.a = 1;
+  color = ambient + diffuse + specular;  
+  
+  // black hole
+  float distance = length(blackHolePosition.xyz - P);
+  if(distance < 0.01 * time){
+    color.rgb = float3(0, 0, 0);
+  }
+
+
   return color;  
 }
