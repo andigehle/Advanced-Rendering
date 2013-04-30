@@ -9,14 +9,19 @@ package hilfsklassen;
  */
 
 import java.awt.event.KeyEvent;
+import java.io.File;
+import java.io.IOException;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLException;
 
 import com.sun.opengl.cg.CGcontext;
 import com.sun.opengl.cg.CGparameter;
 import com.sun.opengl.cg.CGprogram;
 import com.sun.opengl.cg.CgGL;
+import com.sun.opengl.util.texture.Texture;
+import com.sun.opengl.util.texture.TextureIO;
 
 @SuppressWarnings("serial")
 public class AdR_ShadingTemplate extends JoglTemplate
@@ -45,7 +50,7 @@ public class AdR_ShadingTemplate extends JoglTemplate
 
 	private CGprogram cgVertexProg = null, cgFragmentProg = null;
 
-	private CGparameter cgBlackHolePosition, cgTime, cgStretchFactor;
+	private CGparameter cgBlackHolePosition, cgTime, cgStretchFactor, cgTexture;
 
 	private int cgVertexProfile, cgFragProfile;
 
@@ -55,7 +60,9 @@ public class AdR_ShadingTemplate extends JoglTemplate
 
 	private int currentMaterial = 0;
 
-	private boolean stretch = true, animation = true;
+	private boolean stretch = true, animation = false;
+	
+	private Texture crateTexture;
 
 	public static void main(String[] args)
 	{
@@ -80,6 +87,17 @@ public class AdR_ShadingTemplate extends JoglTemplate
 		gl.glEnable(GL.GL_CULL_FACE);
 		// load mesh
 		dList = MeshLoader.loadObj(gl, "assets/objects/bunny.obj", 0.5f);
+		
+		//Loading textures
+		gl.glEnable(GL.GL_TEXTURE_2D);
+		try {
+			File file_crate = new File("assets/textures/crate.png");
+			crateTexture = TextureIO.newTexture(file_crate, true);
+		} catch (GLException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void initCg()
@@ -137,6 +155,7 @@ public class AdR_ShadingTemplate extends JoglTemplate
 		cgTime = CgGL.cgGetNamedParameter(cgFragmentProg, "time");
 		// TODO: Assignment 3_1: bind stretch factor
 		cgStretchFactor = CgGL.cgGetNamedParameter(cgVertexProg, "stretchFactor");
+		//cgTexture = CgGL.cgGetNamedParameter(cgFragmentProg, "texture0");
 	}
 
 	public void display(GLAutoDrawable drawable)
@@ -153,6 +172,11 @@ public class AdR_ShadingTemplate extends JoglTemplate
 		gl.glPushMatrix();
 		applyMouseTranslation(gl);
 		applyMouseRotation(gl);
+		
+		//Setup modis
+		gl.glEnable(GL.GL_DEPTH_TEST);
+		gl.glEnable(GL.GL_CULL_FACE);
+		//gl.glEnable(GL.GL_COLOR_MATERIAL);
 
 		// set material for cg
 		float[] material = MATERIALS[currentMaterial];
@@ -170,20 +194,32 @@ public class AdR_ShadingTemplate extends JoglTemplate
 		gl.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, MOVING_LIGHT_ADS, 0);
 		gl.glLightfv(GL.GL_LIGHT0, GL.GL_DIFFUSE, MOVING_LIGHT_ADS, 4);
 		gl.glLightfv(GL.GL_LIGHT0, GL.GL_SPECULAR, MOVING_LIGHT_ADS, 8);
+		
+		gl.glLightfv(GL.GL_LIGHT1, GL.GL_AMBIENT, MOVING_LIGHT_ADS, 8);
+		gl.glLightfv(GL.GL_LIGHT1, GL.GL_DIFFUSE, MOVING_LIGHT_ADS, 2);
+		gl.glLightfv(GL.GL_LIGHT1, GL.GL_SPECULAR, MOVING_LIGHT_ADS, 4);
 
 		// calculate light position
-		float dLightHeight = 5.0f;
+		float dLightHeight = 2.0f;
 		double dLightRadius = 5.0d;
 		float[] lightPos = new float[] {
 				(float) (dLightRadius * Math.cos(getFrameCounter() * 3.14 / 200.0)),
 				(float) (dLightRadius * Math.sin(getFrameCounter() * 3.14 / 200.0)),
 				dLightHeight, 1.0f };
 		gl.glLightfv(GL.GL_LIGHT0, GL.GL_POSITION, lightPos, 0);
+		gl.glLightfv(GL.GL_LIGHT1, GL.GL_POSITION, new float[]{-lightPos[0],lightPos[1],lightPos[2],lightPos[3]}, 0);
 
 		// draw light as sphere (without shader)
 		gl.glPushMatrix();
 		gl.glTranslatef(lightPos[0], lightPos[1], lightPos[2]);
 		gl.glColor3f(1f, 1f, 1f);
+		getGlu().gluSphere(getGlu().gluNewQuadric(), 0.3, 10, 10);
+		gl.glPopMatrix();
+		
+		// draw light as sphere (without shader)
+		gl.glPushMatrix();
+		gl.glTranslatef(-lightPos[0], lightPos[1], lightPos[2]);
+		gl.glColor3f(0.5f, 1f, 0.5f);
 		getGlu().gluSphere(getGlu().gluNewQuadric(), 0.3, 10, 10);
 		gl.glPopMatrix();
 
@@ -203,8 +239,35 @@ public class AdR_ShadingTemplate extends JoglTemplate
 		CgGL.cgGLBindProgram(cgVertexProg);
 		CgGL.cgGLEnableProfile(getCgFragProfile());
 		CgGL.cgGLBindProgram(cgFragmentProg);
-		// draw mesh
-		gl.glCallList(dList);
+		
+		// draw mesh	
+		//gl.glCallList(dList);
+		
+
+
+		int size = 1;
+		// Test drawSquare method
+		gl.glPushMatrix();
+		{
+			gl.glTranslatef(-size/2, -size/2, -size/2);
+			
+			float[][] colors = { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 },
+					{ 1, 1, 0 }, { 1, 0, 1 }, { 0, 1, 1 } };
+			float[][] vertices = { { 0, 0, 0 }, { 0, size, 0 },
+					{ size, size, 0 }, { size, 0, 0 }, { 0, 0, size },
+					{ 0, size, size }, { size, size, size }, { size, 0, size } };
+			// Front - Left - Right - Top - Bottom - Back
+			int[][] faces = { { 0, 1, 2, 3 }, { 0, 4, 5, 1 }, { 3, 2, 6, 7 },
+					{ 1, 5, 6, 2 }, { 0, 3, 7, 4 }, { 4, 7, 6, 5 } };
+
+			//crateTexture.enable();
+			//crateTexture.bind();
+			//CgGL.cgGLSetParameter3fv(cgTexture, texture, 0);
+			drawCube(gl, colors, vertices, faces);
+			crateTexture.disable();
+		}
+		gl.glPopMatrix();
+		
 		// disable profiles, unload shaders
 		CgGL.cgGLDisableProfile(getCgVertexProfile());
 		CgGL.cgGLDisableProfile(getCgFragProfile());
@@ -289,5 +352,55 @@ public class AdR_ShadingTemplate extends JoglTemplate
 	public int getFrameCounter()
 	{
 		return frameCounter;
+	}
+	
+	public void drawCube(GL gl, float[][] colors, float[][] vertices,
+			int[][] faces) {
+
+		gl.glPushMatrix();
+		{
+			for (int i = 0; i < 6; i++) {
+				drawSquare3f(gl, colors[i], vertices[faces[i][0]],
+						vertices[faces[i][1]], vertices[faces[i][2]],
+						vertices[faces[i][3]]);
+			}
+		}
+		gl.glPopMatrix();
+	}
+
+	// ------------------------------------------------------------
+
+	/**
+	 * Draws a square based on given vertexes
+	 */
+	public void drawSquare3f(GL gl, float[] color, float[] vertex1,
+			float[] vertex2, float[] vertex3, float[] vertex4) {
+
+		gl.glPushMatrix();
+		{
+			gl.glColor3f(color[0], color[1], color[2]);
+			gl.glBegin(GL.GL_POLYGON);
+			{
+				//Set normals
+				if(vertex1[0] == vertex2[0] && vertex1[0] == vertex3[0] && vertex1[0] == vertex4[0]){
+					gl.glNormal3f(1, 0, 0);
+				}else if(vertex1[1] == vertex2[1] && vertex1[1] == vertex3[1] && vertex1[1] == vertex4[1]){
+					gl.glNormal3f(0, 1, 0);
+				}else if(vertex1[2] == vertex2[2] && vertex1[2] == vertex3[2] && vertex1[2] == vertex4[2]){
+					gl.glNormal3f(0, 0, 1);
+				}
+
+		        gl.glTexCoord2f(0, 0);
+				gl.glVertex3f(vertex1[0], vertex1[1], vertex1[2]);
+		        gl.glTexCoord2f(1, 0);
+				gl.glVertex3f(vertex2[0], vertex2[1], vertex2[2]);
+		        gl.glTexCoord2f(1, 1);
+				gl.glVertex3f(vertex3[0], vertex3[1], vertex3[2]);
+		        gl.glTexCoord2f(0, 1);
+				gl.glVertex3f(vertex4[0], vertex4[1], vertex4[2]);
+			}
+			gl.glEnd();
+		}
+		gl.glPopMatrix();
 	}
 }

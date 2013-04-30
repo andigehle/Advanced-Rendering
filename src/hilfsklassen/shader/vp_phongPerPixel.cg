@@ -3,6 +3,7 @@ struct vertexIN
 {
   float4 position	: POSITION;
   float3 normal		: NORMAL;
+  float2 texCoord0   : TEXCOORD0;
 };
 
 // vertex program output
@@ -11,6 +12,7 @@ struct vertexOUT
   float4 cameraSpacePos : POSITION;
   float3 objectSpacePos : TEXCOORD1;
   float3 normal   : TEXCOORD2;
+  float2 texCoord0 : TEXCOORD0;
 };
 
 float4 stretch;
@@ -30,6 +32,8 @@ vertexOUT main(vertexIN vIn, uniform float stretchFactor)
   vOut.objectSpacePos = vIn.position.xyz;
   // copy Normal
   vOut.normal = vIn.normal;
+  // copy Texcoords
+  vOut.texCoord0 = vIn.texCoord0;
   return vOut;
 }
 

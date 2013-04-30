@@ -84,6 +84,7 @@ public class DrawCube extends DrawSquare {
 			crateTexture.enable();
 			crateTexture.bind();
 			drawCube(gl, colors, vertices, faces);
+			crateTexture.disable();
 		}
 		gl.glPopMatrix();
 	}

@@ -1,0 +1,88 @@
+// data interpolated from vertex program output
+struct vertexIN
+{
+  float3 objectSpacePos : TEXCOORD1;
+  float3 normal   : TEXCOORD2;
+};
+
+// OpenGL state
+uniform float4x4 ModelViewInverse : state.matrix.modelview.inverse;
+
+uniform float4 Light0Position : state.light[0].position;
+uniform float4 Light0Ambient : state.light[0].ambient;
+uniform float4 Light0Diffuse : state.light[0].diffuse;
+uniform float4 Light0Specular : state.light[0].specular;
+
+uniform float4 Light1Position : state.light[1].position;
+uniform float4 Light1Ambient : state.light[1].ambient;
+uniform float4 Light1Diffuse : state.light[1].diffuse;
+uniform float4 Light1Specular : state.light[1].specular;
+
+uniform float4 MaterialAmbient : state.material.ambient;
+uniform float4 MaterialDiffuse : state.material.diffuse;
+uniform float4 MaterialSpecular : state.material.specular;
+uniform float MaterialShininess : state.material.shininess;
+
+//For auto light detection
+uniform float3 N;
+uniform float3 v;
+
+
+float4 main(vertexIN vIn,
+            uniform float4 blackHolePosition, 
+            uniform float time) : COLOR
+{
+  //light calculation is done in object space (normals) 
+  v = vIn.objectSpacePos.xyz;
+  N = normalize(vIn.normal);
+  
+  float4 Iamb = float4(0.0, 0.0, 0.0, 0.0);
+   float4 Idiff = float4(0.0, 0.0, 0.0, 0.0);
+   float4 Ispec = float4(0.0, 0.0, 0.0, 0.0); 
+    {
+       float3 L = normalize(Light0Position.xyz - v);   
+       float3 E = normalize(-v); // we are in Eye Coordinates, so EyePos is (0,0,0)  
+       float3 R = normalize(-reflect(L,N)); 
+       
+       //calculate Ambient Term:  
+       ambient += Light0Ambient;    
+    
+       //calculate Diffuse Term:  
+       Idiff += state.light[i].diffuse * max(dot(N,L), 0.0);
+       Idiff = clamp(Idiff, 0.0, 1.0);     
+       
+       // calculate Specular Term:
+       Ispec += state.light[i].specular * pow(max(dot(R,E),0.0),0.3*MaterialShininess);
+       Ispec = clamp(Ispec, 0.0, 1.0); 
+    }{
+       float3 L = normalize(Light0Position.xyz - v);   
+       float3 E = normalize(-v); // we are in Eye Coordinates, so EyePos is (0,0,0)  
+       float3 R = normalize(-reflect(L,N)); 
+       
+       //calculate Ambient Term:  
+       ambient += state.light[i].ambient;    
+    
+       //calculate Diffuse Term:  
+       Idiff += state.light[i].diffuse * max(dot(N,L), 0.0);
+       Idiff = clamp(Idiff, 0.0, 1.0);     
+       
+       // calculate Specular Term:
+       Ispec += state.light[i].specular * pow(max(dot(R,E),0.0),0.3*MaterialShininess);
+       Ispec = clamp(Ispec, 0.0, 1.0); 
+     }
+       
+       
+       
+   // write Total Color:   
+  float4 color;
+  color = Iamb + Idiff + Ispec;     
+  
+  // black hole
+  float distance = length(blackHolePosition.xyz - P);
+  if(distance < 0.01 * time){
+    color.rgb = float3(0, 0, 0);
+  }
+
+
+  return color;   
+}
