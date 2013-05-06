@@ -1,4 +1,4 @@
-package hilfsklassen;
+package exercises;
 
 /**
  * @author Andreas Elsner / Stephan Arens / Gitta Domik
@@ -8,22 +8,29 @@ package hilfsklassen;
  * Research Group of Prof. Gitta Domik - Computer Graphics, Visualization and Digital Image Processing
  */
 
+import hilfsklassen.JoglTemplate;
+import hilfsklassen.MeshLoader;
 
 import java.awt.event.KeyEvent;
+import java.io.File;
+import java.io.IOException;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLException;
 
 import com.sun.opengl.cg.CGcontext;
 import com.sun.opengl.cg.CGparameter;
 import com.sun.opengl.cg.CGprogram;
 import com.sun.opengl.cg.CgGL;
+import com.sun.opengl.util.texture.Texture;
+import com.sun.opengl.util.texture.TextureIO;
 
 @SuppressWarnings("serial")
-public class AdR_ShadingTemplate extends JoglTemplate
+public class Bunny_Toonshader extends JoglTemplate
 {
 	// TODO: Assignment 3_3: create your own toon shader and load it here
-	protected static final String FRAGMENT_SHADER = "src/hilfsklassen/shader/fp_phongPerPixel.cg";
+	protected static final String FRAGMENT_SHADER = "src/hilfsklassen/shader/fp_toon_phongPerPixel.cg";
 
 	protected static final String VERTEX_SHADER = "src/hilfsklassen/shader/vp_phongPerPixel.cg";
 
@@ -46,25 +53,23 @@ public class AdR_ShadingTemplate extends JoglTemplate
 
 	private CGprogram cgVertexProg = null, cgFragmentProg = null;
 
-	private CGparameter cgModelViewProj, cgModelViewInv;
-
-	private CGparameter cgIa, cgId, cgIs, cgKs, cgKd, cgKa, cgShininess;
-
-	private CGparameter cgEyePosition, cgLightPosition;
+	private CGparameter cgBlackHolePosition, cgTime, cgStretchFactor, cgTexture;
 
 	private int cgVertexProfile, cgFragProfile;
 
 	protected int dList;
 
-	private int frameCounter = Integer.MIN_VALUE;
+	private int frameCounter = 0;
 
 	private int currentMaterial = 0;
 
-	private boolean stretch = false, animation = true;
+	private boolean stretch = true, animation = false;
+	
+	private Texture crateTexture;
 
 	public static void main(String[] args)
 	{
-		AdR_ShadingTemplate assignment = new AdR_ShadingTemplate();
+		Bunny_Toonshader assignment = new Bunny_Toonshader();
 		assignment.setVisible(true);
 	}
 
@@ -85,6 +90,17 @@ public class AdR_ShadingTemplate extends JoglTemplate
 		gl.glEnable(GL.GL_CULL_FACE);
 		// load mesh
 		dList = MeshLoader.loadObj(gl, "assets/objects/bunny.obj", 0.5f);
+		
+		//Loading textures
+		gl.glEnable(GL.GL_TEXTURE_2D);
+		try {
+			File file_crate = new File("assets/textures/crate.png");
+			crateTexture = TextureIO.newTexture(file_crate, true);
+		} catch (GLException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void initCg()
@@ -138,22 +154,15 @@ public class AdR_ShadingTemplate extends JoglTemplate
 
 	protected void bindParameters()
 	{
-		cgIa = CgGL.cgGetNamedParameter(cgFragmentProg, "Ia");
-		cgId = CgGL.cgGetNamedParameter(cgFragmentProg, "Id");
-		cgIs = CgGL.cgGetNamedParameter(cgFragmentProg, "Is");
-		cgKa = CgGL.cgGetNamedParameter(cgFragmentProg, "Ka");
-		cgKd = CgGL.cgGetNamedParameter(cgFragmentProg, "Kd");
-		cgKs = CgGL.cgGetNamedParameter(cgFragmentProg, "Ks");
-		cgShininess = CgGL.cgGetNamedParameter(cgFragmentProg, "shininess");
-		cgLightPosition = CgGL.cgGetNamedParameter(cgFragmentProg, "lightPosition");
-		cgEyePosition = CgGL.cgGetNamedParameter(cgFragmentProg, "eyePosition");
-		cgModelViewProj = CgGL.cgGetNamedParameter(cgVertexProg, "modelViewProj");
-		cgModelViewInv = CgGL.cgGetNamedParameter(cgFragmentProg, "modelViewInv");
+		cgBlackHolePosition = CgGL.cgGetNamedParameter(cgFragmentProg, "blackHolePosition");
+		cgTime = CgGL.cgGetNamedParameter(cgFragmentProg, "time");
 		// TODO: Assignment 3_1: bind stretch factor
+		cgStretchFactor = CgGL.cgGetNamedParameter(cgVertexProg, "stretchFactor");
+		//cgTexture = CgGL.cgGetNamedParameter(cgFragmentProg, "texture0");
 	}
 
 	public void display(GLAutoDrawable drawable)
-	{
+	{		
 		// if animation is on, increase frame counter
 		if (animation)
 			incFrameCounter();
@@ -166,32 +175,42 @@ public class AdR_ShadingTemplate extends JoglTemplate
 		gl.glPushMatrix();
 		applyMouseTranslation(gl);
 		applyMouseRotation(gl);
+		
+		//Setup modis
+		gl.glEnable(GL.GL_DEPTH_TEST);
+		gl.glEnable(GL.GL_CULL_FACE);
+		//gl.glEnable(GL.GL_COLOR_MATERIAL);
 
 		// set material for cg
 		float[] material = MATERIALS[currentMaterial];
-		CgGL.cgSetParameter3fv(cgKa, material, 0);
-		CgGL.cgSetParameter3fv(cgKd, material, 4);
-		CgGL.cgSetParameter3fv(cgKs, material, 8);
-		CgGL.cgSetParameter1fv(cgShininess, material, 12);
+		gl.glMaterialfv(GL.GL_FRONT, GL.GL_AMBIENT, material, 0);
+		gl.glMaterialfv(GL.GL_FRONT, GL.GL_DIFFUSE, material, 4);
+		gl.glMaterialfv(GL.GL_FRONT, GL.GL_SPECULAR, material, 8);
+		gl.glMaterialfv(GL.GL_FRONT, GL.GL_SHININESS, material, 12);
 
-		// eyePosition for cg
-		float[] eyePosition = new float[] { -getView_transx(), -getView_transy(),
-				-getView_transz(), 1f };
-		CgGL.cgGLSetParameter3fv(cgEyePosition, eyePosition, 0);
+		// blackHole for cg
+		float[] blackHolePosition = new float[] { -5f, 5f, 0f, 1f };
+		CgGL.cgGLSetParameter3fv(cgBlackHolePosition, blackHolePosition, 0);
+		CgGL.cgGLSetParameter1f(cgTime, getFrameCounter());
 
 		// set light properties
-		CgGL.cgGLSetParameter3fv(cgIa, MOVING_LIGHT_ADS, 0);
-		CgGL.cgGLSetParameter3fv(cgId, MOVING_LIGHT_ADS, 4);
-		CgGL.cgGLSetParameter3fv(cgIs, MOVING_LIGHT_ADS, 8);
+		gl.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, MOVING_LIGHT_ADS, 0);
+		gl.glLightfv(GL.GL_LIGHT0, GL.GL_DIFFUSE, MOVING_LIGHT_ADS, 4);
+		gl.glLightfv(GL.GL_LIGHT0, GL.GL_SPECULAR, MOVING_LIGHT_ADS, 8);
+		
+		gl.glLightfv(GL.GL_LIGHT1, GL.GL_AMBIENT, MOVING_LIGHT_ADS, 8);
+		gl.glLightfv(GL.GL_LIGHT1, GL.GL_DIFFUSE, MOVING_LIGHT_ADS, 2);
+		gl.glLightfv(GL.GL_LIGHT1, GL.GL_SPECULAR, MOVING_LIGHT_ADS, 4);
 
 		// calculate light position
-		float dLightHeight = 5.0f;
+		float dLightHeight = 2.0f;
 		double dLightRadius = 5.0d;
 		float[] lightPos = new float[] {
 				(float) (dLightRadius * Math.cos(getFrameCounter() * 3.14 / 200.0)),
 				(float) (dLightRadius * Math.sin(getFrameCounter() * 3.14 / 200.0)),
 				dLightHeight, 1.0f };
-		CgGL.cgGLSetParameter3fv(cgLightPosition, lightPos, 0);
+		gl.glLightfv(GL.GL_LIGHT0, GL.GL_POSITION, lightPos, 0);
+		gl.glLightfv(GL.GL_LIGHT1, GL.GL_POSITION, new float[]{-lightPos[0],lightPos[1],lightPos[2],lightPos[3]}, 0);
 
 		// draw light as sphere (without shader)
 		gl.glPushMatrix();
@@ -199,6 +218,15 @@ public class AdR_ShadingTemplate extends JoglTemplate
 		gl.glColor3f(1f, 1f, 1f);
 		getGlu().gluSphere(getGlu().gluNewQuadric(), 0.3, 10, 10);
 		gl.glPopMatrix();
+		
+		// draw light as sphere (without shader)
+		/*
+		gl.glPushMatrix();
+		gl.glTranslatef(-lightPos[0], lightPos[1], lightPos[2]);
+		gl.glColor3f(0.5f, 1f, 0.5f);
+		getGlu().gluSphere(getGlu().gluNewQuadric(), 0.3, 10, 10);
+		gl.glPopMatrix();
+		*/
 
 		// move vertices along normals (see vertex program)
 		float stretchFactor = 0;
@@ -206,27 +234,34 @@ public class AdR_ShadingTemplate extends JoglTemplate
 		{
 			// TODO: Assignment 3_1: use Math.sin and getFrameCounter here to
 			// calculate stretchFactor
+			stretchFactor = (float) Math.abs(0.05f * Math.sin(0.01f * getFrameCounter()));
 		}
 		// TODO: Assignment 3_1: set cgStretch parameter
-
-		// set modelview matrix for cg
-		CgGL.cgGLSetStateMatrixParameter(cgModelViewProj,
-				CgGL.CG_GL_MODELVIEW_PROJECTION_MATRIX, CgGL.CG_GL_MATRIX_IDENTITY);
-		CgGL.cgGLSetStateMatrixParameter(cgModelViewInv,
-				CgGL.CG_GL_MODELVIEW_MATRIX, CgGL.CG_GL_MATRIX_INVERSE);
-
+		CgGL.cgGLSetParameter1f(cgStretchFactor, stretchFactor);
+		
 		// enable profiles, bind shaders
 		CgGL.cgGLEnableProfile(getCgVertexProfile());
 		CgGL.cgGLBindProgram(cgVertexProg);
 		CgGL.cgGLEnableProfile(getCgFragProfile());
 		CgGL.cgGLBindProgram(cgFragmentProg);
-		// draw mesh
+		
+		// draw mesh	
 		gl.glCallList(dList);
+		
 		// disable profiles, unload shaders
 		CgGL.cgGLDisableProfile(getCgVertexProfile());
 		CgGL.cgGLDisableProfile(getCgFragProfile());
 
 		// TODO: Assignment 3_3: draw comic outlines here
+		gl.glPolygonMode(GL.GL_BACK, GL.GL_LINE); //Draw As Wireframes
+		gl.glCullFace(GL.GL_FRONT); // Don't Draw Any Front-Facing Polygons
+		gl.glDepthFunc(GL.GL_LEQUAL); // Change The Depth Mode
+		gl.glColor3f(0, 0, 0); // Set The Outline Color
+		gl.glLineWidth(4); // Set The Line Width
+		gl.glCallList(dList); //Call Your Display List
+		gl.glDepthFunc(GL.GL_LESS); // Reset The Depth-Testing Mode
+		gl.glCullFace(GL.GL_BACK); // Reset The Face To Be Culled
+		gl.glPolygonMode(GL.GL_BACK, GL.GL_FILL); // Reset Polygon Drawing Mode
 
 		gl.glPopMatrix();
 	}
@@ -243,7 +278,7 @@ public class AdR_ShadingTemplate extends JoglTemplate
 			frameCounter++;
 		}
 		else
-			frameCounter = Integer.MIN_VALUE;
+			frameCounter = 0;
 	}
 
 	@Override

@@ -1,4 +1,4 @@
-package hilfsklassen;
+package exercises;
 
 /**
  * @author Andreas Elsner / Stephan Arens / Gitta Domik
@@ -8,6 +8,7 @@ package hilfsklassen;
  * Research Group of Prof. Gitta Domik - Computer Graphics, Visualization and Digital Image Processing
  */
 import hilfsklassen.JoglTemplate;
+import hilfsklassen.OBJLoader;
 
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -19,7 +20,7 @@ import com.sun.opengl.util.texture.TextureData;
 import com.sun.opengl.util.texture.TextureIO;
 
 @SuppressWarnings("serial")
-public class AdR_CubeMappingTemplate extends JoglTemplate {
+public class Bunny_Mapping extends JoglTemplate {
 
 	private int textureFilterMode = GL.GL_NEAREST;
 
@@ -34,7 +35,7 @@ public class AdR_CubeMappingTemplate extends JoglTemplate {
 	private int objectList;
 
 	public static void main(String[] args) {
-		AdR_CubeMappingTemplate assignment = new AdR_CubeMappingTemplate();
+		Bunny_Mapping assignment = new Bunny_Mapping();
 		assignment.setVisible(true);
 	}
 

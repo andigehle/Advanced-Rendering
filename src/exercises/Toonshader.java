@@ -1,4 +1,4 @@
-package hilfsklassen;
+package exercises;
 
 /**
  * @author Andreas Elsner / Stephan Arens / Gitta Domik
@@ -7,6 +7,9 @@ package hilfsklassen;
  * Department of Computer Science at the University of Paderborn, Germany
  * Research Group of Prof. Gitta Domik - Computer Graphics, Visualization and Digital Image Processing
  */
+
+import hilfsklassen.JoglTemplate;
+import hilfsklassen.MeshLoader;
 
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -24,10 +27,10 @@ import com.sun.opengl.util.texture.Texture;
 import com.sun.opengl.util.texture.TextureIO;
 
 @SuppressWarnings("serial")
-public class CopyOfAdR_ShadingTemplate extends JoglTemplate
+public class Toonshader extends JoglTemplate
 {
 	// TODO: Assignment 3_3: create your own toon shader and load it here
-	protected static final String FRAGMENT_SHADER = "src/hilfsklassen/shader/fp_pahl_phongPerPixel.cg";
+	protected static final String FRAGMENT_SHADER = "src/hilfsklassen/shader/fp_phongPerPixel.cg";
 
 	protected static final String VERTEX_SHADER = "src/hilfsklassen/shader/vp_phongPerPixel.cg";
 
@@ -66,7 +69,7 @@ public class CopyOfAdR_ShadingTemplate extends JoglTemplate
 
 	public static void main(String[] args)
 	{
-		CopyOfAdR_ShadingTemplate assignment = new CopyOfAdR_ShadingTemplate();
+		Toonshader assignment = new Toonshader();
 		assignment.setVisible(true);
 	}
 
@@ -241,23 +244,38 @@ public class CopyOfAdR_ShadingTemplate extends JoglTemplate
 		CgGL.cgGLBindProgram(cgFragmentProg);
 		
 		// draw mesh	
-		gl.glCallList(dList);
+		//gl.glCallList(dList);
+		
+
+
+		int size = 1;
+		// Test drawSquare method
+		gl.glPushMatrix();
+		{
+			gl.glTranslatef(-size/2, -size/2, -size/2);
+			
+			float[][] colors = { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 },
+					{ 1, 1, 0 }, { 1, 0, 1 }, { 0, 1, 1 } };
+			float[][] vertices = { { 0, 0, 0 }, { 0, size, 0 },
+					{ size, size, 0 }, { size, 0, 0 }, { 0, 0, size },
+					{ 0, size, size }, { size, size, size }, { size, 0, size } };
+			// Front - Left - Right - Top - Bottom - Back
+			int[][] faces = { { 0, 1, 2, 3 }, { 0, 4, 5, 1 }, { 3, 2, 6, 7 },
+					{ 1, 5, 6, 2 }, { 0, 3, 7, 4 }, { 4, 7, 6, 5 } };
+
+			//crateTexture.enable();
+			//crateTexture.bind();
+			//CgGL.cgGLSetParameter3fv(cgTexture, texture, 0);
+			drawCube(gl, colors, vertices, faces);
+			crateTexture.disable();
+		}
+		gl.glPopMatrix();
 		
 		// disable profiles, unload shaders
 		CgGL.cgGLDisableProfile(getCgVertexProfile());
 		CgGL.cgGLDisableProfile(getCgFragProfile());
 
 		// TODO: Assignment 3_3: draw comic outlines here
-		gl.glPolygonMode(GL.GL_BACK, GL.GL_LINE); //Draw As Wireframes
-		gl.glCullFace(GL.GL_FRONT); // Don't Draw Any Front-Facing Polygons
-		gl.glDepthFunc(GL.GL_LEQUAL); // Change The Depth Mode
-		gl.glColor3f(0, 0, 0); // Set The Outline Color
-		gl.glLineWidth(4); // Set The Line Width
-		gl.glCallList(dList); //Call Your Display List
-		gl.glDepthFunc(GL.GL_LESS); // Reset The Depth-Testing Mode
-		gl.glCullFace(GL.GL_BACK); // Reset The Face To Be Culled
-		gl.glPolygonMode(GL.GL_BACK, GL.GL_FILL); // Reset Polygon Drawing Mode
-	
 
 		gl.glPopMatrix();
 	}

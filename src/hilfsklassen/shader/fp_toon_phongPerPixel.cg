@@ -1,0 +1,72 @@
+// data interpolated from vertex program output
+struct vertexIN
+{
+  float3 objectSpacePos : TEXCOORD1;
+  float3 normal   : TEXCOORD2;
+};
+
+// OpenGL state
+uniform float4x4 ModelViewInverse : state.matrix.modelview.inverse;
+uniform float4 Light0Position : state.light[0].position;
+uniform float4 Light0Ambient : state.light[0].ambient;
+uniform float4 Light0Diffuse : state.light[0].diffuse;
+uniform float4 Light0Specular : state.light[0].specular;
+uniform float4 MaterialAmbient : state.material.ambient;
+uniform float4 MaterialDiffuse : state.material.diffuse;
+uniform float4 MaterialSpecular : state.material.specular;
+uniform float MaterialShininess : state.material.shininess;
+
+
+float4 main(vertexIN vIn,
+            uniform float4 blackHolePosition, 
+            uniform float time) : COLOR
+{
+  //light calculation is done in object space (normals) 
+  float3 P = vIn.objectSpacePos.xyz;
+  float3 N = normalize(vIn.normal);
+
+  //so we need to transform eye position 
+  float3 ePos = (mul(ModelViewInverse, float4(0, 0, 0, 1))).xyz;
+  
+  //set lightPosition
+  float3 lPos = (mul(ModelViewInverse, Light0Position)).xyz;
+  lPos = ePos;
+
+  // compute ambient term
+  float4 ambient = MaterialAmbient * Light0Ambient;
+
+  // compute the diffuse term
+  float3 L = normalize(lPos.xyz - P);
+  float diffuseLight = max(dot(L, N), 0);
+  float4 diffuse = MaterialDiffuse * Light0Diffuse * diffuseLight;
+
+  // compute the specular term
+  float3 V = normalize(ePos - P);
+  float3 H = normalize(L + V);
+  float specularLight = pow(max(dot(H, N), 0), MaterialShininess);
+  if (diffuseLight <= 0) specularLight = 0;
+  float4 specular = MaterialSpecular * Light0Specular * specularLight;
+
+  float4 color;
+  color = ambient + diffuse + specular;  
+  color.rgb = L * N;
+  
+  if(diffuseLight > 0.95){  
+  	color.rgb = float3(1, 1, 1);
+  }else{
+	  if(diffuseLight > 0.5){  
+	  	color.rgb = float3(0.753, 0.753, 0.753);
+	  }else{  
+	  	color.rgb = float3(0.5, 0.5, 0.5);
+	  }
+  }
+  
+  // black hole
+  float distance = length(blackHolePosition.xyz - P);
+  if(distance < 0.01 * time){
+    color.rgb = float3(0, 0, 0);
+  }
+
+
+  return color;  
+}
