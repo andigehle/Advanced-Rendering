@@ -64,7 +64,7 @@ float4 main(vertexIN vIn,
 
   float4 color;
   color = ambient0 + ambient1 + diffuse0 + diffuse1 + specular0 + specular1;
-  color *= tex2D(texture0, N);  
+  //color *= tex2D(texture0, N);  
   
    // black hole
    float distance = length(blackHolePosition.xyz - P);

@@ -179,7 +179,7 @@ public class Bunny_Textures extends JoglTemplate
 		//Setup modis
 		gl.glEnable(GL.GL_DEPTH_TEST);
 		gl.glEnable(GL.GL_CULL_FACE);
-		//gl.glEnable(GL.GL_COLOR_MATERIAL);
+		gl.glEnable(GL.GL_COLOR_MATERIAL);
 
 		// set material for cg
 		float[] material = MATERIALS[currentMaterial];

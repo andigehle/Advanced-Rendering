@@ -44,7 +44,6 @@ float4 main(vertexIN vIn,
   {
 	  //set lightPosition
 	  float3 lPos = (mul(ModelViewInverse, Light0Position)).xyz;
-	  //float3 lPos = ePos;
 	
 	  // compute ambient term
 	  float4 ambient = MaterialAmbient * Light0Ambient;
@@ -66,7 +65,6 @@ float4 main(vertexIN vIn,
   {
 	  //set lightPosition
 	  float3 lPos = (mul(ModelViewInverse, Light1Position)).xyz;
-	  //float3 lPos = ePos;
 	
 	  // compute ambient term
 	  float4 ambient = MaterialAmbient * Light1Ambient;
