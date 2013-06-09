@@ -37,4 +37,15 @@ public abstract class runge {
 		k4 = h * f(x, y + k3);
 		return y + (k1 + 2 * k2 + 2 * k3 + k4) / 6.;
 	}
+	
+	public String toString(){
+		String out = "RungeKutta calculated:";
+		
+		for(int i=0; i < x.length; i++){
+			out += " ["+x[i]+","+y[i]+"]";			
+		}
+		
+		return out;
+		
+	}
 }

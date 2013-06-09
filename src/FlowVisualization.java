@@ -7,14 +7,12 @@ import java.util.Scanner;
 import javax.media.opengl.GL;
 import javax.media.opengl.GLAutoDrawable;
 
-import rungenPlot.rungexy;
-
 /**
  * Vis. assignment 1 19.03.2013
  * 
- * @author Andreas Gehle, 6603927
+ * Visualization of a flow data set by runge kutta algorithm for streamlines
  * 
- *         Visualization of a flow data set
+ * @author Andreas Gehle, 6603927
  */
 @SuppressWarnings("serial")
 public class FlowVisualization extends JoglTemplate {
@@ -26,8 +24,9 @@ public class FlowVisualization extends JoglTemplate {
 	private float flow_min = -1;
 	private float flow_max = 0;
 
+	private float[][] points;
+
 	private rungexy slv = new rungexy();
-	private rungexy slv1 = new rungexy();
 
 	/**
 	 * The main method
@@ -51,11 +50,15 @@ public class FlowVisualization extends JoglTemplate {
 		// Parse data
 		parseData("data/field2.irreg");
 
+		// Calculate Streamlines
+		// rungeKutta(9,1);
+		eulerIntegration(30, 0.001f);
+
 		// Zoom out to full view
 		setView_transz(-45);
-
-		new RungeKutta();
 	}
+
+	// ------------------------------------------------------------
 
 	private void parseData(String path) {
 		System.out.println("Parsing data...");
@@ -132,20 +135,47 @@ public class FlowVisualization extends JoglTemplate {
 
 				// Maybe use dim for something...border etc. ?
 				gl.glScalef(20, 20, 1);
-				for (int i = 0; i < flow_data.size(); i++) {
-					Flow current = flow_data.get(i);
-					// Flow next = flow_data.get(i+1);
-
-					gl.glColor3fv(dataToColor(current.to.length), 0);
-					rungeKuttaLines(gl, sedes);
-					//eulerIntegrationLines(gl, current);
-				}
-
+				drawLines(gl);
 			}
 			gl.glPopMatrix();
 		}
 		gl.glPopMatrix();
 	}
+
+	// ------------------------------------------------------------
+
+	private float[] dataToColor(float length) {
+		float range = flow_max - flow_min;
+		float value = length / range;
+
+		float h = (1 - value);
+		float s = 1;
+		float b = 0.5f;
+
+		Color hsb = Color.getHSBColor(h, s, b);
+
+		return new float[] { hsb.getRed(), hsb.getGreen(), hsb.getBlue() };
+	}
+
+	// ------------------------------------------------------------
+
+	public void drawLines(GL gl) {
+		gl.glPushMatrix();
+		{
+			gl.glBegin(GL.GL_LINES);
+			{
+				for (int i = 0; i < points.length - 1; i++) {
+					gl.glColor3fv(dataToColor(points[i][2]), 0);
+					gl.glVertex3f(points[i][0], points[i][1], 0);
+//					gl.glVertex3f(points[i + 1][0], points[i + 1][1], 0);
+				}
+			}
+			gl.glEnd();
+		}
+		gl.glPopMatrix();
+	}
+
+	// ------------------------------------------------------------
 
 	private void drawFlowArrow(GL gl, Flow flow) {
 		float stroke_length = 0.02f;
@@ -174,6 +204,8 @@ public class FlowVisualization extends JoglTemplate {
 		}
 		gl.glPopMatrix();
 	}
+
+	// ------------------------------------------------------------
 
 	private void drawFlowArrow3D(GL gl, float[] coords) {
 		float stroke_length = 0.02f;
@@ -245,77 +277,69 @@ public class FlowVisualization extends JoglTemplate {
 		gl.glPopMatrix();
 	}
 
-	private float[] dataToColor(float length) {
-		float range = flow_max - flow_min;
-		float value = length / range;
+	// ------------------------------------------------------------
 
-		float h = (1 - value);
-		float s = 1;
-		float b = 0.5f;
+	private void eulerIntegration(int n, float dt) {
+		float x, y, f_x, f_y, length;
 
-		Color hsb = Color.getHSBColor(h, s, b);
+		points = new float[flow_data.size() * (n + 1)][3];
 
-		return new float[] { hsb.getRed(), hsb.getGreen(), hsb.getBlue() };
+		for (int i = 0; i < flow_data.size(); i++) {
+			x = flow_data.get(i).from.x;
+			y = flow_data.get(i).from.y;
+			f_x = flow_data.get(i).to.direction.x;
+			f_y = flow_data.get(i).to.direction.y;
+			length = flow_data.get(i).to.length;
+			for (int j = i * n; j < (i + 1) * n; j++) {
+				points[j][0] = x;
+				points[j][1] = y;
+				points[j][2] = length;
+
+				x = x + f_x * dt;
+				y = y + f_y * dt;
+				f_x = -y;
+				f_y = dt * x;
+			}
+		}
 	}
 
-	private void eulerIntegrationLines(GL gl, Flow current) {
-		int n = 30;
-		float dt = .001f;
+	// ------------------------------------------------------------
 
-		float c_x = current.from.x;
-		float c_y = current.from.y;
-		float f_x = current.to.direction.x;
-		float f_y = current.to.direction.y;
+	public void rungeKuttaLines(GL gl, Flow[] seeds, int steps, double stepHeigh) {
+
+		float min = (seeds[0].from.y < seeds[1].from.y) ? seeds[0].from.y
+				: seeds[1].from.y;
+		float max = (seeds[0].from.y > seeds[1].from.y) ? seeds[0].from.y
+				: seeds[1].from.y;
+
+		slv.rkn(seeds[0].from.x, seeds[0].from.y, stepHeigh, steps, min, max);
+
+		// System.out.println(slv);
 
 		// Draw lines
 		gl.glPushMatrix();
 		{
 			gl.glBegin(GL.GL_LINES);
 			{
-				gl.glVertex2f(c_x, c_y);
-				for (int i = 0; i < n; i++) {
-					// Next step
-					c_x = c_x + f_x * dt;
-					c_y = c_y + f_y * dt;
-					f_x = -c_y;
-					f_y = dt * c_x;
+				// gl.glVertex2f(seeds[0].from.x, seeds[0].from.y);
+				for (int i = 0; i < steps; i++) {
 
-					gl.glVertex2f(c_x, c_y);
-					gl.glVertex2f(c_x, c_y);
+					// gl.glVertex2d(slv.x[i], slv.y[i]);
+					gl.glVertex2d(slv.x[i], slv.y[i]);
+					// gl.glVertex2d(slv.x[i + 1], slv.y[i + 1]);
+					// gl.glPushMatrix();
+					// gl.glTranslated(slv.x[i], slv.y[i], 0);
+					// getGlut().glutSolidSphere(0.005f, 10, 10);
+					// gl.glPopMatrix();
 				}
 			}
 			gl.glEnd();
 		}
 		gl.glPopMatrix();
+
 	}
 
-	private void eulerIntegrationArrows(GL gl, Flow current) {
-		int n = 10;
-		float dt = .001f;
-
-		float c_x = current.from.x;
-		float c_y = current.from.y;
-		float f_x = current.to.direction.x;
-		float f_y = current.to.direction.y;
-
-		drawFlowArrow(gl, current);
-		for (int i = 0; i < n; i++) {
-			// Next step
-			c_x = c_x + f_x * dt;
-			c_y = c_y + f_y * dt;
-			f_x = -c_y;
-			f_y = dt * c_x;
-
-			drawFlowArrow(gl, new Flow(new Point(c_x, c_y, 0), new Vector(
-					new Point(f_x, f_y, 0))));
-		}
-	}
-
-	public void rungeKuttaLines(GL gl, Flow[] seeds) {
-		slv.rkn(x0, y0, h, N, boundmin, boundmax);
-		
-		slv
-	}
+	// ------------------------------------------------------------
 
 	/*
 	 * RungeKutta.java by Richard J. Davies from `Introductory Java for
